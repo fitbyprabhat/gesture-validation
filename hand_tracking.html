@@ -498,6 +498,285 @@
       font-size: 0.9rem;
       line-height: 1.5;
     }
+
+    /* ========== MOBILE RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .subtitle {
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      .upload-section {
+        padding: 12px 15px;
+        flex-direction: column;
+      }
+
+      .upload-btn {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+      }
+
+      .main-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .container {
+        border-radius: 15px;
+      }
+
+      #videoElement,
+      #canvasElement {
+        width: 100%;
+        max-width: 360px;
+        height: auto;
+        aspect-ratio: 4/3;
+      }
+
+      .reference-container {
+        border-radius: 15px;
+      }
+
+      #referenceCanvas {
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+      }
+
+      .record-btn {
+        padding: 15px 30px;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      .results-panel {
+        min-width: unset;
+        max-width: 100%;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .score-value {
+        font-size: 3.5rem;
+      }
+
+      .feedback-item {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+      }
+
+      .instructions {
+        padding: 15px;
+      }
+
+      .steps {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .step {
+        min-width: unset;
+        padding: 12px;
+      }
+
+      .status-section {
+        flex-wrap: wrap;
+      }
+
+      .status-item {
+        min-width: 70px;
+        padding: 8px 12px;
+      }
+
+      .section-label {
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.3rem;
+      }
+
+      .score-value {
+        font-size: 3rem;
+      }
+
+      .instructions {
+        display: none;
+      }
+    }
+
+    /* ========== FUN MODE ========== */
+    .mode-toggle {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .mode-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .mode-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #f472b6, #fbbf24);
+      border-color: transparent;
+      color: #000;
+    }
+
+    .fun-mode-panel {
+      display: none;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 25px;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+
+    .fun-mode-panel.active {
+      display: block;
+    }
+
+    .fun-mode-panel h2 {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #fbbf24;
+      margin-bottom: 20px;
+    }
+
+    .detected-gesture {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+
+    .gesture-emoji {
+      font-size: 5rem;
+      line-height: 1;
+      animation: bounce 0.5s ease;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .gesture-name-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 10px;
+      background: linear-gradient(90deg, #f472b6, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gesture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 10px;
+    }
+
+    .gesture-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .gesture-item.detected {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(0, 212, 255, 0.3));
+      border-color: #10b981;
+      transform: scale(1.05);
+    }
+
+    .gesture-item .emoji {
+      font-size: 1.8rem;
+    }
+
+    .gesture-item .name {
+      font-size: 0.7rem;
+      color: #a0aec0;
+      margin-top: 5px;
+    }
+
+    .validation-mode {
+      display: block;
+    }
+
+    .validation-mode.hidden {
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .fun-mode-panel {
+        padding: 15px;
+      }
+
+      .gesture-emoji {
+        font-size: 4rem;
+      }
+
+      .gesture-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+
+      .gesture-item {
+        padding: 8px 4px;
+      }
+
+      .gesture-item .emoji {
+        font-size: 1.5rem;
+      }
+
+      .gesture-item .name {
+        font-size: 0.6rem;
+      }
+    }
   </style>
 </head>
 
@@ -505,109 +784,179 @@
   <h1>🎯 Gesture Validation</h1>
   <p class="subtitle">Record your gesture, compare with DTW for accurate matching</p>
 
-  <!-- File Upload Section -->
-  <div class="upload-section">
-    <label class="upload-btn">
-      📁 Load Reference Gesture
-      <input type="file" id="fileInput" accept=".json" />
-    </label>
-    <div class="gesture-info">
-      Loaded: <span class="gesture-name" id="loadedGestureName">None</span>
-      <span id="frameCount"></span>
-    </div>
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="validationModeBtn">📊 Validation Mode</button>
+    <button class="mode-btn" id="funModeBtn">🎉 Fun Mode</button>
   </div>
 
-  <div class="main-content">
-    <!-- Live Camera Section -->
-    <div class="video-section">
-      <div class="section-label">📹 Your Camera</div>
-      <div class="container" id="cameraContainer">
-        <video id="videoElement" width="560" height="420" autoplay playsinline></video>
-        <canvas id="canvasElement" width="560" height="420"></canvas>
-        <div class="recording-indicator" id="recordingIndicator">
-          <div class="recording-dot"></div>
-          <span>Recording... <span id="recordingFrames">0</span> frames</span>
-        </div>
-      </div>
-      <div class="controls">
-        <button class="record-btn" id="recordBtn" disabled>
-          🔴 Start Recording
-        </button>
-        <button class="play-btn active" id="toggleLandmarks">👁 Show Landmarks</button>
-      </div>
-      <div class="status-section">
-        <div class="status-item fps">
-          <div class="label">FPS</div>
-          <div class="value" id="fpsValue">--</div>
-        </div>
-        <div class="status-item status">
-          <div class="label">Status</div>
-          <div class="value loading" id="statusValue">Loading...</div>
-        </div>
-      </div>
+  <!-- Fun Mode Panel -->
+  <div class="fun-mode-panel" id="funModePanel">
+    <h2>🖐️ Show Your Hand Signs!</h2>
+    <div class="detected-gesture">
+      <div class="gesture-emoji" id="funGestureEmoji">👋</div>
+      <div class="gesture-name-display" id="funGestureName">Waiting...</div>
     </div>
-
-    <!-- Reference Section -->
-    <div class="reference-section">
-      <div class="section-label">🎬 Reference Gesture</div>
-      <div class="reference-container">
-        <canvas id="referenceCanvas" width="280" height="210"></canvas>
+    <div class="gesture-grid" id="gestureGrid">
+      <div class="gesture-item" data-gesture="thumbs_up">
+        <div class="emoji">👍</div>
+        <div class="name">Thumbs Up</div>
       </div>
-      <div class="playback-controls">
-        <button class="play-btn" id="playRefBtn" disabled>▶ Play</button>
-        <button class="play-btn" id="pauseRefBtn" disabled>⏸ Pause</button>
+      <div class="gesture-item" data-gesture="thumbs_down">
+        <div class="emoji">👎</div>
+        <div class="name">Thumbs Down</div>
       </div>
-      <div class="status-section">
-        <div class="status-item frames">
-          <div class="label">Frame</div>
-          <div class="value"><span id="currentFrame">0</span>/<span id="totalFrames">0</span></div>
-        </div>
+      <div class="gesture-item" data-gesture="peace">
+        <div class="emoji">✌️</div>
+        <div class="name">Peace</div>
       </div>
-    </div>
-
-    <!-- Results Panel -->
-    <div class="results-panel">
-      <h2>📊 Analysis Results</h2>
-
-      <div class="score-display">
-        <div class="score-value waiting" id="scoreValue">--%</div>
-        <div class="score-label">DTW Similarity Score</div>
-        <div class="result-badge" id="resultBadge" style="display: none;">Perfect! ✅</div>
+      <div class="gesture-item" data-gesture="fist">
+        <div class="emoji">✊</div>
+        <div class="name">Fist</div>
       </div>
-
-      <div class="feedback-section">
-        <div class="feedback-title">Detailed Feedback</div>
-        <ul class="feedback-list" id="feedbackList">
-          <li class="feedback-item success">
-            <span class="feedback-icon">📋</span>
-            <span>Load a gesture and record yours to get feedback</span>
-          </li>
-        </ul>
+      <div class="gesture-item" data-gesture="open_palm">
+        <div class="emoji">🖐️</div>
+        <div class="name">Open Palm</div>
+      </div>
+      <div class="gesture-item" data-gesture="pointing">
+        <div class="emoji">☝️</div>
+        <div class="name">Pointing</div>
+      </div>
+      <div class="gesture-item" data-gesture="ok">
+        <div class="emoji">👌</div>
+        <div class="name">OK Sign</div>
+      </div>
+      <div class="gesture-item" data-gesture="rock">
+        <div class="emoji">🤘</div>
+        <div class="name">Rock</div>
+      </div>
+      <div class="gesture-item" data-gesture="love">
+        <div class="emoji">🤟</div>
+        <div class="name">Love You</div>
+      </div>
+      <div class="gesture-item" data-gesture="call">
+        <div class="emoji">🤙</div>
+        <div class="name">Call Me</div>
+      </div>
+      <div class="gesture-item" data-gesture="three">
+        <div class="emoji">🖖</div>
+        <div class="name">Vulcan</div>
+      </div>
+      <div class="gesture-item" data-gesture="pinch">
+        <div class="emoji">🤏</div>
+        <div class="name">Pinch</div>
       </div>
     </div>
   </div>
 
-  <div class="instructions">
-    <h3>How It Works</h3>
-    <div class="steps">
-      <div class="step">
-        <div class="step-number">1</div>
-        <div class="step-text"><strong>Load</strong> a reference gesture JSON file (from pose_extraction.py)</div>
-      </div>
-      <div class="step">
-        <div class="step-number">2</div>
-        <div class="step-text"><strong>Click Start Recording</strong> and perform the gesture</div>
-      </div>
-      <div class="step">
-        <div class="step-number">3</div>
-        <div class="step-text"><strong>Click Stop</strong> when done - DTW ignores timing differences!</div>
-      </div>
-      <div class="step">
-        <div class="step-number">4</div>
-        <div class="step-text"><strong>Get feedback</strong> on what's correct and what needs work</div>
+  <!-- Validation Mode Content -->
+  <div class="validation-mode" id="validationMode">
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label class="upload-btn">
+        📁 Load Reference Gesture
+        <input type="file" id="fileInput" accept=".json" />
+      </label>
+      <div class="gesture-info">
+        Loaded: <span class="gesture-name" id="loadedGestureName">None</span>
+        <span id="frameCount"></span>
       </div>
     </div>
-  </div>
+
+    <div class="main-content">
+      <!-- Live Camera Section -->
+      <div class="video-section">
+        <div class="section-label">📹 Your Camera</div>
+        <div class="container" id="cameraContainer">
+          <video id="videoElement" width="560" height="420" autoplay playsinline></video>
+          <canvas id="canvasElement" width="560" height="420"></canvas>
+          <div class="recording-indicator" id="recordingIndicator">
+            <div class="recording-dot"></div>
+            <span>Recording... <span id="recordingFrames">0</span> frames</span>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="record-btn" id="recordBtn" disabled>
+            🔴 Start Recording
+          </button>
+          <button class="play-btn active" id="toggleLandmarks">👁 Show Landmarks</button>
+        </div>
+        <div class="status-section">
+          <div class="status-item fps">
+            <div class="label">FPS</div>
+            <div class="value" id="fpsValue">--</div>
+          </div>
+          <div class="status-item status">
+            <div class="label">Status</div>
+            <div class="value loading" id="statusValue">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reference Section -->
+      <div class="reference-section">
+        <div class="section-label">🎬 Reference Gesture</div>
+        <div class="reference-container">
+          <canvas id="referenceCanvas" width="280" height="210"></canvas>
+        </div>
+        <div class="playback-controls">
+          <button class="play-btn" id="playRefBtn" disabled>▶ Play</button>
+          <button class="play-btn" id="pauseRefBtn" disabled>⏸ Pause</button>
+        </div>
+        <div class="status-section">
+          <div class="status-item frames">
+            <div class="label">Frame</div>
+            <div class="value"><span id="currentFrame">0</span>/<span id="totalFrames">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="results-panel">
+        <h2>📊 Analysis Results</h2>
+
+        <div class="score-display">
+          <div class="score-value waiting" id="scoreValue">--%</div>
+          <div class="score-label">DTW Similarity Score</div>
+          <div class="result-badge" id="resultBadge" style="display: none;">Perfect! ✅</div>
+        </div>
+
+        <div class="feedback-section">
+          <div class="feedback-title">Detailed Feedback</div>
+          <ul class="feedback-list" id="feedbackList">
+            <li class="feedback-item success">
+              <span class="feedback-icon">📋</span>
+              <span>Load a gesture and record yours to get feedback</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h3>How It Works</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text"><strong>Load</strong> a reference gesture JSON file (from pose_extraction.py)</div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text"><strong>Click Start Recording</strong> and perform the gesture</div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text"><strong>Click Stop</strong> when done - DTW ignores timing differences!</div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-text"><strong>Get feedback</strong> on what's correct and what needs work</div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End validation-mode -->
 
   <!-- MediaPipe Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -659,6 +1008,159 @@
       toggleLandmarksBtn.classList.toggle('active', showLandmarks);
       toggleLandmarksBtn.textContent = showLandmarks ? '👁 Show Landmarks' : '👁 Hide Landmarks';
     });
+
+    // ========== FUN MODE ==========
+    const validationModeBtn = document.getElementById('validationModeBtn');
+    const funModeBtn = document.getElementById('funModeBtn');
+    const funModePanel = document.getElementById('funModePanel');
+    const validationMode = document.getElementById('validationMode');
+    const funGestureEmoji = document.getElementById('funGestureEmoji');
+    const funGestureName = document.getElementById('funGestureName');
+    const gestureGrid = document.getElementById('gestureGrid');
+
+    let isFunMode = false;
+
+    const GESTURES = {
+      thumbs_up: { emoji: '👍', name: 'Thumbs Up' },
+      thumbs_down: { emoji: '👎', name: 'Thumbs Down' },
+      peace: { emoji: '✌️', name: 'Peace' },
+      fist: { emoji: '✊', name: 'Fist' },
+      open_palm: { emoji: '🖐️', name: 'Open Palm' },
+      pointing: { emoji: '☝️', name: 'Pointing' },
+      ok: { emoji: '👌', name: 'OK Sign' },
+      rock: { emoji: '🤘', name: 'Rock' },
+      love: { emoji: '🤟', name: 'Love You' },
+      call: { emoji: '🤙', name: 'Call Me' },
+      three: { emoji: '🖖', name: 'Vulcan' },
+      pinch: { emoji: '🤏', name: 'Pinch' },
+      none: { emoji: '👋', name: 'Show a gesture!' }
+    };
+
+    validationModeBtn.addEventListener('click', () => {
+      isFunMode = false;
+      validationModeBtn.classList.add('active');
+      funModeBtn.classList.remove('active');
+      funModePanel.classList.remove('active');
+      validationMode.classList.remove('hidden');
+    });
+
+    funModeBtn.addEventListener('click', () => {
+      isFunMode = true;
+      funModeBtn.classList.add('active');
+      validationModeBtn.classList.remove('active');
+      funModePanel.classList.add('active');
+      validationMode.classList.add('hidden');
+    });
+
+    // Gesture Recognition Functions
+    function distance(p1, p2) {
+      return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    }
+
+    function isFingerExtended(landmarks, fingerBase, fingerTip, wrist) {
+      const baseToTip = distance(landmarks[fingerBase], landmarks[fingerTip]);
+      const wristToBase = distance(landmarks[wrist], landmarks[fingerBase]);
+      return baseToTip > wristToBase * 0.5;
+    }
+
+    function getFingerStates(landmarks) {
+      const wrist = 0;
+      // Thumb - special case (compare to index MCP)
+      const thumbExtended = landmarks[4].x < landmarks[3].x; // For right hand
+
+      return {
+        thumb: distance(landmarks[4], landmarks[2]) > distance(landmarks[3], landmarks[2]) * 0.8,
+        index: isFingerExtended(landmarks, 5, 8, wrist),
+        middle: isFingerExtended(landmarks, 9, 12, wrist),
+        ring: isFingerExtended(landmarks, 13, 16, wrist),
+        pinky: isFingerExtended(landmarks, 17, 20, wrist)
+      };
+    }
+
+    function recognizeGesture(landmarks) {
+      if (!landmarks || landmarks.length < 21) return 'none';
+
+      const fingers = getFingerStates(landmarks);
+      const extendedCount = Object.values(fingers).filter(v => v).length;
+
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+      const middleTip = landmarks[12];
+      const wrist = landmarks[0];
+
+      // Pinch - thumb and index close together
+      if (distance(thumbTip, indexTip) < 0.05) {
+        if (!fingers.middle && !fingers.ring && !fingers.pinky) {
+          return 'pinch';
+        }
+        return 'ok';
+      }
+
+      // Thumbs up - only thumb extended, thumb pointing up
+      if (fingers.thumb && !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
+        if (thumbTip.y < landmarks[2].y) {
+          return 'thumbs_up';
+        } else {
+          return 'thumbs_down';
+        }
+      }
+
+      // Fist - no fingers extended
+      if (extendedCount === 0) {
+        return 'fist';
+      }
+
+      // Open palm - all fingers extended
+      if (extendedCount === 5) {
+        return 'open_palm';
+      }
+
+      // Pointing - only index extended
+      if (fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
+        return 'pointing';
+      }
+
+      // Peace - index and middle extended
+      if (fingers.index && fingers.middle && !fingers.ring && !fingers.pinky) {
+        return 'peace';
+      }
+
+      // Rock - index and pinky extended
+      if (fingers.index && !fingers.middle && !fingers.ring && fingers.pinky) {
+        return 'rock';
+      }
+
+      // Love you (ASL) - thumb, index, pinky extended
+      if (fingers.thumb && fingers.index && !fingers.middle && !fingers.ring && fingers.pinky) {
+        return 'love';
+      }
+
+      // Call me - thumb and pinky extended
+      if (fingers.thumb && !fingers.index && !fingers.middle && !fingers.ring && fingers.pinky) {
+        return 'call';
+      }
+
+      // Vulcan/Three - index, middle, ring extended with gap
+      if (fingers.index && fingers.middle && fingers.ring && !fingers.pinky) {
+        return 'three';
+      }
+
+      return 'none';
+    }
+
+    function updateFunModeDisplay(gesture) {
+      const gestureData = GESTURES[gesture] || GESTURES.none;
+      funGestureEmoji.textContent = gestureData.emoji;
+      funGestureName.textContent = gestureData.name;
+
+      // Update grid highlighting
+      document.querySelectorAll('.gesture-item').forEach(item => {
+        item.classList.remove('detected');
+        if (item.dataset.gesture === gesture) {
+          item.classList.add('detected');
+        }
+      });
+    }
 
     let frameCount = 0;
     let lastTime = performance.now();
@@ -1171,6 +1673,13 @@
             hand.forEach((lm, i) => drawLandmark(canvasCtx, lm.x * w, lm.y * h, 4, getHandColor(i)));
           }
         });
+      }
+
+      // Fun Mode - detect and display gesture
+      if (isFunMode) {
+        const hand = results.rightHandLandmarks || results.leftHandLandmarks;
+        const detectedGesture = recognizeGesture(hand);
+        updateFunModeDisplay(detectedGesture);
       }
 
       canvasCtx.restore();
