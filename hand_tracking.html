@@ -3,7 +3,12 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0c29">
   <title>Gesture Validation with DTW</title>
   <style>
     * {
@@ -1686,12 +1691,19 @@
     }
 
     // Initialize
+    // Detect mobile/iOS
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    statusValueEl.textContent = 'Loading model...';
+
     const holistic = new Holistic({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
     });
 
+    // Use lower complexity on mobile for better performance
     holistic.setOptions({
-      modelComplexity: 1,
+      modelComplexity: isMobile ? 0 : 1,  // Lite model on mobile
       smoothLandmarks: true,
       enableSegmentation: false,
       refineFaceLandmarks: false,
@@ -1699,23 +1711,72 @@
       minTrackingConfidence: 0.5
     });
 
-    holistic.onResults(onResults);
+    let modelLoaded = false;
+
+    holistic.onResults((results) => {
+      if (!modelLoaded) {
+        modelLoaded = true;
+        statusValueEl.textContent = 'Active';
+        statusValueEl.classList.remove('loading');
+        console.log('MediaPipe model loaded successfully!');
+      }
+      onResults(results);
+    });
+
+    // Show mobile warning if needed
+    if (isIOS) {
+      console.warn('iOS detected - MediaPipe may have limited support');
+    }
 
     const camera = new Camera(videoElement, {
-      onFrame: async () => { await holistic.send({ image: videoElement }); },
-      width: 560,
-      height: 420
+      onFrame: async () => {
+        try {
+          await holistic.send({ image: videoElement });
+        } catch (e) {
+          console.error('MediaPipe error:', e);
+        }
+      },
+      width: isMobile ? 320 : 560,
+      height: isMobile ? 240 : 420
     });
+
+    // Set timeout for model loading
+    const loadTimeout = setTimeout(() => {
+      if (!modelLoaded) {
+        statusValueEl.textContent = 'Slow load...';
+        // Show help message
+        const helpMsg = document.createElement('div');
+        helpMsg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.9);color:white;padding:15px 25px;border-radius:10px;font-size:14px;z-index:1000;text-align:center;max-width:90%;';
+        helpMsg.innerHTML = `
+          <strong>⚠️ Model Loading Slow</strong><br>
+          ${isIOS ? 'iOS Safari may have limited support for MediaPipe.<br>Try Chrome on Android or desktop for best results.' : 'Please wait or try refreshing the page.'}
+        `;
+        document.body.appendChild(helpMsg);
+        setTimeout(() => helpMsg.remove(), 10000);
+      }
+    }, 15000);
 
     camera.start()
       .then(() => {
-        statusValueEl.textContent = 'Ready';
-        statusValueEl.classList.remove('loading');
+        console.log('Camera started successfully');
+        if (!modelLoaded) {
+          statusValueEl.textContent = 'Loading AI...';
+        }
       })
       .catch(err => {
         console.error('Camera error:', err);
-        statusValueEl.textContent = 'Error';
+        statusValueEl.textContent = 'Camera Error';
         statusValueEl.classList.remove('loading');
+
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(239,68,68,0.95);color:white;padding:25px;border-radius:15px;font-size:16px;z-index:1000;text-align:center;max-width:90%;';
+        errorMsg.innerHTML = `
+          <strong>📷 Camera Access Denied</strong><br><br>
+          Please allow camera access and refresh the page.<br>
+          <small>Error: ${err.message || err}</small>
+        `;
+        document.body.appendChild(errorMsg);
       });
 
     // Init reference canvas
