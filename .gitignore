@@ -1,0 +1,15 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Output files
+*.mp4
+*.avi
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gesture Validation with DTW</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #a0aec0;
+      margin-bottom: 15px;
+    }
+
+    /* File Upload Section */
+    .upload-section {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 15px;
+      padding: 15px 25px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #7c3aed, #00d4ff);
+      padding: 12px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: none;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .gesture-info {
+      color: #a0aec0;
+      font-size: 0.9rem;
+    }
+
+    .gesture-name {
+      color: #00d4ff;
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Video Section */
+    .video-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a0aec0;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .container.recording {
+      box-shadow: 0 0 0 4px #ef4444, 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: pulse-border 1s infinite;
+    }
+
+    @keyframes pulse-border {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 4px #ef4444, 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px #f97316, 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    #videoElement {
+      display: block;
+      transform: scaleX(-1);
+    }
+
+    #canvasElement {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: scaleX(-1);
+    }
+
+    .recording-indicator {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(239, 68, 68, 0.9);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .recording-indicator.active {
+      display: flex;
+    }
+
+    .recording-dot {
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    /* Controls */
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .record-btn {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      border: none;
+      color: #fff;
+      padding: 15px 35px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .record-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .record-btn.recording {
+      background: linear-gradient(135deg, #10b981, #00d4ff);
+    }
+
+    .record-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Reference Section */
+    .reference-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .reference-container {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(0, 212, 255, 0.2));
+      border: 2px solid rgba(124, 58, 237, 0.5);
+    }
+
+    #referenceCanvas {
+      display: block;
+    }
+
+    .playback-controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .play-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .play-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .play-btn.active {
+      background: linear-gradient(135deg, #7c3aed, #00d4ff);
+      border-color: transparent;
+    }
+
+    .play-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Results Panel */
+    .results-panel {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 25px;
+      min-width: 320px;
+      max-width: 380px;
+    }
+
+    .results-panel h2 {
+      font-size: 1rem;
+      color: #00d4ff;
+      margin-bottom: 20px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* Score Display */
+    .score-display {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+    }
+
+    .score-value {
+      font-size: 4.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .score-value.excellent {
+      background: linear-gradient(135deg, #10b981, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-value.good {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-value.poor {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-value.waiting {
+      color: #a0aec0;
+    }
+
+    .score-label {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      margin-top: 8px;
+    }
+
+    .result-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .result-badge.perfect {
+      background: linear-gradient(135deg, #10b981, #00d4ff);
+    }
+
+    .result-badge.good {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      color: #000;
+    }
+
+    .result-badge.needs-work {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+    }
+
+    /* Feedback Section */
+    .feedback-section {
+      margin-top: 20px;
+    }
+
+    .feedback-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a0aec0;
+      margin-bottom: 10px;
+    }
+
+    .feedback-list {
+      list-style: none;
+    }
+
+    .feedback-item {
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feedback-item.success {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .feedback-item.warning {
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    .feedback-item.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .feedback-icon {
+      font-size: 1.2rem;
+    }
+
+    /* Status */
+    .status-section {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .status-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 15px;
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .status-item .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a0aec0;
+      margin-bottom: 3px;
+    }
+
+    .status-item .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .status-item.fps .value {
+      color: #7c3aed;
+    }
+
+    .status-item.frames .value {
+      color: #00d4ff;
+    }
+
+    .status-item.status .value {
+      color: #10b981;
+    }
+
+    .status-item.status .value.loading {
+      color: #f59e0b;
+    }
+
+    /* Instructions */
+    .instructions {
+      margin-top: 20px;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .instructions h3 {
+      color: #00d4ff;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+
+    .steps {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .step {
+      flex: 1;
+      min-width: 200px;
+      text-align: center;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .step-number {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #7c3aed, #00d4ff);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .step-text {
+      color: #a0aec0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎯 Gesture Validation</h1>
+  <p class="subtitle">Record your gesture, compare with DTW for accurate matching</p>
+
+  <!-- File Upload Section -->
+  <div class="upload-section">
+    <label class="upload-btn">
+      📁 Load Reference Gesture
+      <input type="file" id="fileInput" accept=".json" />
+    </label>
+    <div class="gesture-info">
+      Loaded: <span class="gesture-name" id="loadedGestureName">None</span>
+      <span id="frameCount"></span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Live Camera Section -->
+    <div class="video-section">
+      <div class="section-label">📹 Your Camera</div>
+      <div class="container" id="cameraContainer">
+        <video id="videoElement" width="560" height="420" autoplay playsinline></video>
+        <canvas id="canvasElement" width="560" height="420"></canvas>
+        <div class="recording-indicator" id="recordingIndicator">
+          <div class="recording-dot"></div>
+          <span>Recording... <span id="recordingFrames">0</span> frames</span>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="record-btn" id="recordBtn" disabled>
+          🔴 Start Recording
+        </button>
+        <button class="play-btn active" id="toggleLandmarks">👁 Show Landmarks</button>
+      </div>
+      <div class="status-section">
+        <div class="status-item fps">
+          <div class="label">FPS</div>
+          <div class="value" id="fpsValue">--</div>
+        </div>
+        <div class="status-item status">
+          <div class="label">Status</div>
+          <div class="value loading" id="statusValue">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reference Section -->
+    <div class="reference-section">
+      <div class="section-label">🎬 Reference Gesture</div>
+      <div class="reference-container">
+        <canvas id="referenceCanvas" width="280" height="210"></canvas>
+      </div>
+      <div class="playback-controls">
+        <button class="play-btn" id="playRefBtn" disabled>▶ Play</button>
+        <button class="play-btn" id="pauseRefBtn" disabled>⏸ Pause</button>
+      </div>
+      <div class="status-section">
+        <div class="status-item frames">
+          <div class="label">Frame</div>
+          <div class="value"><span id="currentFrame">0</span>/<span id="totalFrames">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+      <h2>📊 Analysis Results</h2>
+
+      <div class="score-display">
+        <div class="score-value waiting" id="scoreValue">--%</div>
+        <div class="score-label">DTW Similarity Score</div>
+        <div class="result-badge" id="resultBadge" style="display: none;">Perfect! ✅</div>
+      </div>
+
+      <div class="feedback-section">
+        <div class="feedback-title">Detailed Feedback</div>
+        <ul class="feedback-list" id="feedbackList">
+          <li class="feedback-item success">
+            <span class="feedback-icon">📋</span>
+            <span>Load a gesture and record yours to get feedback</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>How It Works</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-text"><strong>Load</strong> a reference gesture JSON file (from pose_extraction.py)</div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-text"><strong>Click Start Recording</strong> and perform the gesture</div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-text"><strong>Click Stop</strong> when done - DTW ignores timing differences!</div>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-text"><strong>Get feedback</strong> on what's correct and what needs work</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MediaPipe Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+
+  <script>
+    // ========== DOM ELEMENTS ==========
+    const videoElement = document.getElementById('videoElement');
+    const canvasElement = document.getElementById('canvasElement');
+    const canvasCtx = canvasElement.getContext('2d');
+    const referenceCanvas = document.getElementById('referenceCanvas');
+    const referenceCtx = referenceCanvas.getContext('2d');
+    const cameraContainer = document.getElementById('cameraContainer');
+    const recordingIndicator = document.getElementById('recordingIndicator');
+
+    const fileInput = document.getElementById('fileInput');
+    const loadedGestureName = document.getElementById('loadedGestureName');
+    const frameCountSpan = document.getElementById('frameCount');
+
+    const recordBtn = document.getElementById('recordBtn');
+    const recordingFramesEl = document.getElementById('recordingFrames');
+
+    const playRefBtn = document.getElementById('playRefBtn');
+    const pauseRefBtn = document.getElementById('pauseRefBtn');
+    const currentFrameEl = document.getElementById('currentFrame');
+    const totalFramesEl = document.getElementById('totalFrames');
+
+    const scoreValue = document.getElementById('scoreValue');
+    const resultBadge = document.getElementById('resultBadge');
+    const feedbackList = document.getElementById('feedbackList');
+
+    const fpsValueEl = document.getElementById('fpsValue');
+    const statusValueEl = document.getElementById('statusValue');
+
+    // ========== STATE ==========
+    let referenceGesture = null;
+    let recordedGesture = [];
+    let isRecording = false;
+    let refFrameIndex = 0;
+    let refPlayInterval = null;
+    let showLandmarks = true;
+
+    const toggleLandmarksBtn = document.getElementById('toggleLandmarks');
+
+    // Toggle landmarks visibility
+    toggleLandmarksBtn.addEventListener('click', () => {
+      showLandmarks = !showLandmarks;
+      toggleLandmarksBtn.classList.toggle('active', showLandmarks);
+      toggleLandmarksBtn.textContent = showLandmarks ? '👁 Show Landmarks' : '👁 Hide Landmarks';
+    });
+
+    let frameCount = 0;
+    let lastTime = performance.now();
+
+    // Landmark names for feedback
+    const FINGER_NAMES = ['Wrist', 'Thumb CMC', 'Thumb MCP', 'Thumb IP', 'Thumb Tip',
+      'Index MCP', 'Index PIP', 'Index DIP', 'Index Tip',
+      'Middle MCP', 'Middle PIP', 'Middle DIP', 'Middle Tip',
+      'Ring MCP', 'Ring PIP', 'Ring DIP', 'Ring Tip',
+      'Pinky MCP', 'Pinky PIP', 'Pinky DIP', 'Pinky Tip'];
+
+    const FINGER_GROUPS = {
+      'Thumb': [1, 2, 3, 4],
+      'Index': [5, 6, 7, 8],
+      'Middle': [9, 10, 11, 12],
+      'Ring': [13, 14, 15, 16],
+      'Pinky': [17, 18, 19, 20]
+    };
+
+    // ========== FILE LOADING ==========
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          referenceGesture = JSON.parse(event.target.result);
+          const gestureName = file.name.replace('.json', '');
+          loadedGestureName.textContent = gestureName;
+          frameCountSpan.textContent = ` (${referenceGesture.length} frames)`;
+          totalFramesEl.textContent = referenceGesture.length;
+
+          recordBtn.disabled = false;
+          playRefBtn.disabled = false;
+          pauseRefBtn.disabled = false;
+
+          drawReferenceFrame(0);
+          updateFeedback([{
+            type: 'success',
+            icon: '✅',
+            text: `Loaded "${gestureName}" - Ready to record!`
+          }]);
+        } catch (err) {
+          console.error('Error parsing JSON:', err);
+          updateFeedback([{
+            type: 'error',
+            icon: '❌',
+            text: 'Error loading file'
+          }]);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // ========== RECORDING ==========
+    recordBtn.addEventListener('click', toggleRecording);
+
+    function toggleRecording(e) {
+      e.preventDefault();
+      if (!referenceGesture) return;
+
+      if (isRecording) {
+        // Stop recording
+        isRecording = false;
+        recordBtn.textContent = '🔴 Start Recording';
+        recordBtn.classList.remove('recording');
+        cameraContainer.classList.remove('recording');
+        recordingIndicator.classList.remove('active');
+
+        if (recordedGesture.length < 5) {
+          updateFeedback([{
+            type: 'error',
+            icon: '⚠️',
+            text: 'Recording too short. Try again!'
+          }]);
+          return;
+        }
+
+        // Analyze with DTW
+        analyzeGesture();
+      } else {
+        // Start recording
+        isRecording = true;
+        recordedGesture = [];
+        recordBtn.textContent = '⏹ Stop Recording';
+        recordBtn.classList.add('recording');
+        cameraContainer.classList.add('recording');
+        recordingIndicator.classList.add('active');
+        recordingFramesEl.textContent = '0';
+
+        scoreValue.textContent = '--%';
+        scoreValue.className = 'score-value waiting';
+        resultBadge.style.display = 'none';
+        updateFeedback([{
+          type: 'success',
+          icon: '🎬',
+          text: 'Recording... perform the gesture now!'
+        }]);
+      }
+    }
+
+    // ========== DTW ALGORITHM ==========
+    function computeDTW(seq1, seq2) {
+      const n = seq1.length;
+      const m = seq2.length;
+
+      // Create distance matrix
+      const dtw = Array(n + 1).fill(null).map(() => Array(m + 1).fill(Infinity));
+      dtw[0][0] = 0;
+
+      for (let i = 1; i <= n; i++) {
+        for (let j = 1; j <= m; j++) {
+          const cost = landmarkDistance(seq1[i - 1], seq2[j - 1]);
+          dtw[i][j] = cost + Math.min(
+            dtw[i - 1][j],     // insertion
+            dtw[i][j - 1],     // deletion
+            dtw[i - 1][j - 1]  // match
+          );
+        }
+      }
+
+      return dtw[n][m] / Math.max(n, m); // Normalize by path length
+    }
+
+    function landmarkDistance(frame1, frame2) {
+      let totalDist = 0;
+      let count = 0;
+
+      // Compare hands
+      ['left_hand', 'right_hand'].forEach(handKey => {
+        const hand1 = frame1[handKey];
+        const hand2 = frame2[handKey];
+
+        if (hand1 && hand1.length > 0 && hand2 && hand2.length > 0) {
+          // Normalize relative to wrist
+          const wrist1 = hand1[0];
+          const wrist2 = hand2[0];
+
+          for (let i = 0; i < Math.min(hand1.length, hand2.length); i++) {
+            const p1 = { x: hand1[i].x - wrist1.x, y: hand1[i].y - wrist1.y };
+            const p2 = { x: hand2[i].x - wrist2.x, y: hand2[i].y - wrist2.y };
+
+            totalDist += Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+            count++;
+          }
+        }
+      });
+
+      return count > 0 ? totalDist / count : 1;
+    }
+
+    function analyzeGesture() {
+      if (!referenceGesture || recordedGesture.length === 0) return;
+
+      // Extract hand sequences
+      const refSeq = referenceGesture.map(f => ({
+        left_hand: f.left_hand,
+        right_hand: f.right_hand
+      }));
+
+      const recSeq = recordedGesture.map(f => ({
+        left_hand: f.left_hand,
+        right_hand: f.right_hand
+      }));
+
+      // Compute DTW distance
+      const dtwDistance = computeDTW(recSeq, refSeq);
+
+      // Convert to similarity percentage (lower distance = higher similarity)
+      // Typical good match has distance < 0.05, bad match > 0.15
+      const similarity = Math.max(0, Math.min(100, 100 - (dtwDistance * 500)));
+
+      // Update score display
+      scoreValue.textContent = Math.round(similarity) + '%';
+      scoreValue.className = 'score-value';
+
+      // Generate detailed feedback
+      const feedback = [];
+      const fingerErrors = analyzeFingerErrors();
+
+      if (similarity >= 90) {
+        scoreValue.classList.add('excellent');
+        resultBadge.textContent = 'Perfect! ✅';
+        resultBadge.className = 'result-badge perfect';
+        resultBadge.style.display = 'inline-block';
+        feedback.push({
+          type: 'success',
+          icon: '🎉',
+          text: 'Excellent match! Your gesture is accurate!'
+        });
+      } else if (similarity >= 70) {
+        scoreValue.classList.add('good');
+        resultBadge.textContent = 'Good! 👍';
+        resultBadge.className = 'result-badge good';
+        resultBadge.style.display = 'inline-block';
+        feedback.push({
+          type: 'success',
+          icon: '👍',
+          text: 'Good job! Minor adjustments needed.'
+        });
+      } else {
+        scoreValue.classList.add('poor');
+        resultBadge.textContent = 'Keep Practicing 💪';
+        resultBadge.className = 'result-badge needs-work';
+        resultBadge.style.display = 'inline-block';
+        feedback.push({
+          type: 'warning',
+          icon: '💪',
+          text: 'Needs more practice. Check the issues below.'
+        });
+      }
+
+      // Add specific finger feedback
+      fingerErrors.forEach(err => {
+        feedback.push({
+          type: err.severity,
+          icon: err.icon,
+          text: err.message
+        });
+      });
+
+      // Add general tips
+      if (fingerErrors.length === 0 && similarity < 90) {
+        feedback.push({
+          type: 'warning',
+          icon: '⏱️',
+          text: 'Try matching the movement speed and flow better'
+        });
+      }
+
+      updateFeedback(feedback);
+    }
+
+    function analyzeFingerErrors() {
+      const errors = [];
+      if (!referenceGesture || recordedGesture.length === 0) return errors;
+
+      // Sample middle frames for comparison
+      const refMid = referenceGesture[Math.floor(referenceGesture.length / 2)];
+      const recMid = recordedGesture[Math.floor(recordedGesture.length / 2)];
+
+      // Analyze each hand
+      ['left_hand', 'right_hand'].forEach((handKey, handIdx) => {
+        const handName = handIdx === 0 ? 'Left' : 'Right';
+        const refHand = refMid[handKey];
+        const recHand = recMid[handKey];
+
+        if (!refHand || refHand.length === 0) return;
+        if (!recHand || recHand.length === 0) {
+          errors.push({
+            severity: 'error',
+            icon: '🖐️',
+            message: `${handName} hand not detected - make sure it's visible`
+          });
+          return;
+        }
+
+        // Normalize relative to wrist
+        const refWrist = refHand[0];
+        const recWrist = recHand[0];
+
+        // Check each finger group
+        Object.entries(FINGER_GROUPS).forEach(([fingerName, indices]) => {
+          let fingerError = 0;
+          indices.forEach(i => {
+            if (refHand[i] && recHand[i]) {
+              const refNorm = { x: refHand[i].x - refWrist.x, y: refHand[i].y - refWrist.y };
+              const recNorm = { x: recHand[i].x - recWrist.x, y: recHand[i].y - recWrist.y };
+              fingerError += Math.sqrt(Math.pow(refNorm.x - recNorm.x, 2) + Math.pow(refNorm.y - recNorm.y, 2));
+            }
+          });
+          fingerError /= indices.length;
+
+          // Check direction
+          const tipIdx = indices[indices.length - 1];
+          const baseIdx = indices[0];
+
+          if (refHand[tipIdx] && recHand[tipIdx] && refHand[baseIdx] && recHand[baseIdx]) {
+            const refTipY = refHand[tipIdx].y - refWrist.y;
+            const recTipY = recHand[tipIdx].y - recWrist.y;
+
+            if (fingerError > 0.08) {
+              let direction = '';
+              if (recTipY > refTipY + 0.03) {
+                direction = 'too low';
+              } else if (recTipY < refTipY - 0.03) {
+                direction = 'too high';
+              } else {
+                const refTipX = refHand[tipIdx].x - refWrist.x;
+                const recTipX = recHand[tipIdx].x - recWrist.x;
+                if (recTipX > refTipX + 0.03) {
+                  direction = 'too far right';
+                } else if (recTipX < refTipX - 0.03) {
+                  direction = 'too far left';
+                }
+              }
+
+              if (direction) {
+                errors.push({
+                  severity: fingerError > 0.12 ? 'error' : 'warning',
+                  icon: fingerError > 0.12 ? '❌' : '⚠️',
+                  message: `${handName} ${fingerName} finger is ${direction}`
+                });
+              }
+            }
+          }
+        });
+
+        // Check if hand is extended vs curled (overall shape)
+        const refSpread = calculateHandSpread(refHand);
+        const recSpread = calculateHandSpread(recHand);
+
+        if (Math.abs(refSpread - recSpread) > 0.1) {
+          if (recSpread < refSpread) {
+            errors.push({
+              severity: 'warning',
+              icon: '✊',
+              message: `${handName} hand should be more open/spread`
+            });
+          } else {
+            errors.push({
+              severity: 'warning',
+              icon: '🖐️',
+              message: `${handName} hand should be more closed/curled`
+            });
+          }
+        }
+      });
+
+      return errors;
+    }
+
+    function calculateHandSpread(hand) {
+      if (!hand || hand.length < 21) return 0;
+
+      // Calculate average distance from wrist to fingertips
+      const tipIndices = [4, 8, 12, 16, 20];
+      let totalDist = 0;
+
+      tipIndices.forEach(i => {
+        if (hand[i] && hand[0]) {
+          totalDist += Math.sqrt(
+            Math.pow(hand[i].x - hand[0].x, 2) +
+            Math.pow(hand[i].y - hand[0].y, 2)
+          );
+        }
+      });
+
+      return totalDist / tipIndices.length;
+    }
+
+    function updateFeedback(items) {
+      feedbackList.innerHTML = '';
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.className = `feedback-item ${item.type}`;
+        li.innerHTML = `
+          <span class="feedback-icon">${item.icon}</span>
+          <span>${item.text}</span>
+        `;
+        feedbackList.appendChild(li);
+      });
+    }
+
+    // ========== REFERENCE PLAYBACK ==========
+    playRefBtn.addEventListener('click', () => {
+      if (!referenceGesture) return;
+      playRefBtn.classList.add('active');
+      pauseRefBtn.classList.remove('active');
+
+      if (refPlayInterval) clearInterval(refPlayInterval);
+      refPlayInterval = setInterval(() => {
+        refFrameIndex = (refFrameIndex + 1) % referenceGesture.length;
+        currentFrameEl.textContent = refFrameIndex + 1;
+        drawReferenceFrame(refFrameIndex);
+      }, 1000 / 30);
+    });
+
+    pauseRefBtn.addEventListener('click', () => {
+      pauseRefBtn.classList.add('active');
+      playRefBtn.classList.remove('active');
+      if (refPlayInterval) {
+        clearInterval(refPlayInterval);
+        refPlayInterval = null;
+      }
+    });
+
+    // ========== DRAWING ==========
+    const POSE_COLORS = { TORSO: '#fbbf24', LEFT_ARM: '#10b981', RIGHT_ARM: '#3b82f6', LEFT_LEG: '#a855f7', RIGHT_LEG: '#ec4899' };
+    const FINGER_COLORS = { WRIST: '#ff6b6b', THUMB: '#ffd93d', INDEX: '#6bcb77', MIDDLE: '#4d96ff', RING: '#c77dff', PINKY: '#ff6b9d' };
+
+    const POSE_CONNECTIONS = [[11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21], [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [23, 25], [25, 27], [27, 29], [27, 31], [24, 26], [26, 28], [28, 30], [28, 32]];
+    const HAND_CONNECTIONS = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10], [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18], [18, 19], [19, 20], [5, 9], [9, 13], [13, 17]];
+
+    function getPoseColor(i) {
+      if ([11, 13, 15, 17, 19, 21].includes(i)) return POSE_COLORS.LEFT_ARM;
+      if ([12, 14, 16, 18, 20, 22].includes(i)) return POSE_COLORS.RIGHT_ARM;
+      if ([23, 25, 27, 29, 31].includes(i)) return POSE_COLORS.LEFT_LEG;
+      if ([24, 26, 28, 30, 32].includes(i)) return POSE_COLORS.RIGHT_LEG;
+      return POSE_COLORS.TORSO;
+    }
+
+    function getHandColor(i) {
+      if (i === 0) return FINGER_COLORS.WRIST;
+      if (i <= 4) return FINGER_COLORS.THUMB;
+      if (i <= 8) return FINGER_COLORS.INDEX;
+      if (i <= 12) return FINGER_COLORS.MIDDLE;
+      if (i <= 16) return FINGER_COLORS.RING;
+      return FINGER_COLORS.PINKY;
+    }
+
+    function drawLandmark(ctx, x, y, r, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawConnection(ctx, x1, y1, x2, y2, color, w) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = w;
+      ctx.stroke();
+    }
+
+    function drawReferenceFrame(idx) {
+      if (!referenceGesture || !referenceGesture[idx]) return;
+      const frame = referenceGesture[idx];
+      const w = referenceCanvas.width, h = referenceCanvas.height;
+
+      referenceCtx.fillStyle = 'rgba(15, 12, 41, 0.95)';
+      referenceCtx.fillRect(0, 0, w, h);
+
+      // Draw pose
+      if (frame.pose) {
+        POSE_CONNECTIONS.forEach(([s, e]) => {
+          const p1 = frame.pose[s], p2 = frame.pose[e];
+          if (p1 && p2 && (p1.vis || 0) > 0.3 && (p2.vis || 0) > 0.3) {
+            drawConnection(referenceCtx, p1.x * w, p1.y * h, p2.x * w, p2.y * h, getPoseColor(s), 2);
+          }
+        });
+        frame.pose.forEach((lm, i) => {
+          if (i > 10 && (lm.vis || 0) > 0.3) drawLandmark(referenceCtx, lm.x * w, lm.y * h, 3, getPoseColor(i));
+        });
+      }
+
+      // Draw hands
+      [frame.left_hand, frame.right_hand].forEach(hand => {
+        if (hand && hand.length > 0) {
+          HAND_CONNECTIONS.forEach(([s, e]) => {
+            const p1 = hand[s], p2 = hand[e];
+            if (p1 && p2) drawConnection(referenceCtx, p1.x * w, p1.y * h, p2.x * w, p2.y * h, getHandColor(s), 2);
+          });
+          hand.forEach((lm, i) => drawLandmark(referenceCtx, lm.x * w, lm.y * h, 2, getHandColor(i)));
+        }
+      });
+    }
+
+    // ========== MEDIAPIPE ==========
+    function onResults(results) {
+      frameCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        fpsValueEl.textContent = frameCount;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      const w = canvasElement.width, h = canvasElement.height;
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, w, h);
+      canvasCtx.drawImage(results.image, 0, 0, w, h);
+
+      // Record frame if recording
+      if (isRecording) {
+        const frameData = {
+          left_hand: results.leftHandLandmarks ? results.leftHandLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z })) : [],
+          right_hand: results.rightHandLandmarks ? results.rightHandLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z })) : [],
+          pose: results.poseLandmarks ? results.poseLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z, vis: lm.visibility })) : []
+        };
+        recordedGesture.push(frameData);
+        recordingFramesEl.textContent = recordedGesture.length;
+      }
+
+      // Draw landmarks only if enabled
+      if (showLandmarks) {
+        // Draw pose
+        if (results.poseLandmarks) {
+          POSE_CONNECTIONS.forEach(([s, e]) => {
+            const p1 = results.poseLandmarks[s], p2 = results.poseLandmarks[e];
+            if (p1 && p2 && p1.visibility > 0.5 && p2.visibility > 0.5) {
+              drawConnection(canvasCtx, p1.x * w, p1.y * h, p2.x * w, p2.y * h, getPoseColor(s), 3);
+            }
+          });
+          results.poseLandmarks.forEach((lm, i) => {
+            if (i > 10 && lm.visibility > 0.5) drawLandmark(canvasCtx, lm.x * w, lm.y * h, 5, getPoseColor(i));
+          });
+        }
+
+        // Draw hands
+        [results.leftHandLandmarks, results.rightHandLandmarks].forEach(hand => {
+          if (hand) {
+            HAND_CONNECTIONS.forEach(([s, e]) => {
+              const p1 = hand[s], p2 = hand[e];
+              drawConnection(canvasCtx, p1.x * w, p1.y * h, p2.x * w, p2.y * h, getHandColor(s), 2);
+            });
+            hand.forEach((lm, i) => drawLandmark(canvasCtx, lm.x * w, lm.y * h, 4, getHandColor(i)));
+          }
+        });
+      }
+
+      canvasCtx.restore();
+    }
+
+    // Initialize
+    const holistic = new Holistic({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
+    });
+
+    holistic.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      refineFaceLandmarks: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    holistic.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await holistic.send({ image: videoElement }); },
+      width: 560,
+      height: 420
+    });
+
+    camera.start()
+      .then(() => {
+        statusValueEl.textContent = 'Ready';
+        statusValueEl.classList.remove('loading');
+      })
+      .catch(err => {
+        console.error('Camera error:', err);
+        statusValueEl.textContent = 'Error';
+        statusValueEl.classList.remove('loading');
+      });
+
+    // Init reference canvas
+    referenceCtx.fillStyle = 'rgba(15, 12, 41, 0.95)';
+    referenceCtx.fillRect(0, 0, referenceCanvas.width, referenceCanvas.height);
+    referenceCtx.fillStyle = '#a0aec0';
+    referenceCtx.font = '12px Segoe UI';
+    referenceCtx.textAlign = 'center';
+    referenceCtx.fillText('Load a gesture JSON', referenceCanvas.width / 2, referenceCanvas.height / 2);
+  </script>
+</body>
+
+</html>
