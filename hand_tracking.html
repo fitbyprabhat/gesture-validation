@@ -628,6 +628,162 @@
       }
     }
 
+    /* ========== FULLSCREEN MOBILE MODE ========== */
+    .fullscreen-mode body {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .fullscreen-mode .container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      z-index: 100;
+    }
+
+    .fullscreen-mode #videoElement,
+    .fullscreen-mode #canvasElement {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      object-fit: cover;
+    }
+
+    .fullscreen-mode .recording-indicator {
+      top: env(safe-area-inset-top, 15px);
+      left: 15px;
+    }
+
+    .fullscreen-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 200;
+      background: linear-gradient(135deg, #7c3aed, #00d4ff);
+      border: none;
+      color: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .fullscreen-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    /* ========== SIGNS LIBRARY PANEL ========== */
+    .signs-library-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 200;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      border: none;
+      color: #000;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .signs-library-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 12, 41, 0.98);
+      backdrop-filter: blur(20px);
+      border-top: 2px solid rgba(124, 58, 237, 0.5);
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      z-index: 300;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .signs-library-panel.open {
+      transform: translateY(0);
+    }
+
+    .signs-library-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .signs-library-header h3 {
+      color: #fbbf24;
+      font-size: 1.1rem;
+    }
+
+    .close-library-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .signs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .sign-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 15px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .sign-card:hover,
+    .sign-card.active {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(0, 212, 255, 0.3));
+      border-color: #7c3aed;
+      transform: scale(1.02);
+    }
+
+    .sign-card .sign-name {
+      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .sign-card .sign-frames {
+      font-size: 0.7rem;
+      color: #a0aec0;
+      margin-top: 5px;
+    }
+
+    .signs-empty {
+      text-align: center;
+      color: #a0aec0;
+      padding: 30px;
+    }
+
     /* ========== FUN MODE ========== */
     .mode-toggle {
       margin-bottom: 15px;
@@ -869,6 +1025,21 @@
       </div>
     </div>
 
+    <!-- Cloud Storage Section -->
+    <div class="upload-section" id="cloudSection">
+      <button class="upload-btn" id="uploadCloudBtn" disabled
+        style="background: linear-gradient(135deg, #10b981, #00d4ff);">
+        ☁️ Upload to Cloud
+      </button>
+      <select id="cloudGestureSelect" class="upload-btn"
+        style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #000; padding: 12px 20px;">
+        <option value="">📥 Load from Cloud...</option>
+      </select>
+      <div class="gesture-info">
+        <span id="cloudStatus" style="color: #a0aec0;">☁️ Connecting...</span>
+      </div>
+    </div>
+
     <div class="main-content">
       <!-- Live Camera Section -->
       <div class="video-section">
@@ -963,6 +1134,27 @@
 
   </div> <!-- End validation-mode -->
 
+  <!-- Fullscreen Button (Mobile) -->
+  <button class="fullscreen-btn" id="fullscreenBtn">⛶</button>
+
+  <!-- Signs Library Button -->
+  <button class="signs-library-btn" id="signsLibraryBtn">📚</button>
+
+  <!-- Signs Library Panel -->
+  <div class="signs-library-panel" id="signsLibraryPanel">
+    <div class="signs-library-header">
+      <h3>📚 Signs Library</h3>
+      <button class="close-library-btn" id="closeLibraryBtn">✕</button>
+    </div>
+    <div class="signs-grid" id="signsGrid">
+      <div class="signs-empty">Loading signs from cloud...</div>
+    </div>
+  </div>
+
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- MediaPipe Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -1004,6 +1196,313 @@
     let refFrameIndex = 0;
     let refPlayInterval = null;
     let showLandmarks = true;
+
+    // ========== SUPABASE CONFIGURATION ==========
+    const SUPABASE_URL = 'https://rduqgaayrrsirkkiyaxw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkdXFnYWF5cnJzaXJra2l5YXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NzM5MTksImV4cCI6MjA4NjE0OTkxOX0.a4_fTKl-OmDc00aSmOtEcULHh31gZCCXlHlLw1xASVk';
+
+    // Cloud UI Elements
+    const uploadCloudBtn = document.getElementById('uploadCloudBtn');
+    const cloudGestureSelect = document.getElementById('cloudGestureSelect');
+    const cloudStatus = document.getElementById('cloudStatus');
+
+    // Supabase Client
+    let supabaseClient = null;
+    let gesturesDict = {}; // Cache for loaded gestures
+
+    // Initialize Supabase
+    async function initSupabase() {
+      try {
+        if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+          cloudStatus.innerHTML = '⚠️ <a href="#" onclick="alert(\'Add your Supabase credentials in the script\'); return false;" style="color: #f59e0b;">Configure Supabase</a>';
+          console.warn('Supabase not configured. Add your SUPABASE_URL and SUPABASE_ANON_KEY.');
+          return;
+        }
+
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        cloudStatus.textContent = '☁️ Connected';
+        cloudStatus.style.color = '#10b981';
+        console.log('Supabase connected successfully!');
+
+        // Load available gestures
+        await refreshCloudGestures();
+      } catch (error) {
+        cloudStatus.textContent = '❌ Connection failed';
+        cloudStatus.style.color = '#ef4444';
+        console.error('Supabase init error:', error);
+      }
+    }
+
+    // Fetch all gestures from Supabase
+    async function refreshCloudGestures() {
+      if (!supabaseClient) return;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('gestures')
+          .select('name, frame_count')
+          .order('name');
+
+        if (error) throw error;
+
+        // Update dropdown
+        cloudGestureSelect.innerHTML = '<option value="">📥 Load from Cloud...</option>';
+        data.forEach(gesture => {
+          const option = document.createElement('option');
+          option.value = gesture.name;
+          option.textContent = `${gesture.name} (${gesture.frame_count} frames)`;
+          cloudGestureSelect.appendChild(option);
+        });
+
+        console.log(`Loaded ${data.length} gestures from cloud`);
+      } catch (error) {
+        console.error('Error fetching gestures:', error);
+      }
+    }
+
+    // Upload gesture to Supabase
+    async function uploadGestureToSupabase(name, data) {
+      if (!supabaseClient) {
+        alert('Supabase not connected. Please configure your credentials.');
+        return false;
+      }
+
+      try {
+        cloudStatus.textContent = '⏳ Uploading...';
+        cloudStatus.style.color = '#f59e0b';
+
+        const { error } = await supabaseClient
+          .from('gestures')
+          .upsert({
+            name: name,
+            data: data,
+            frame_count: data.length,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'name' });
+
+        if (error) throw error;
+
+        cloudStatus.textContent = '✅ Uploaded!';
+        cloudStatus.style.color = '#10b981';
+        setTimeout(() => {
+          cloudStatus.textContent = '☁️ Connected';
+        }, 2000);
+
+        await refreshCloudGestures();
+        return true;
+      } catch (error) {
+        cloudStatus.textContent = '❌ Upload failed';
+        cloudStatus.style.color = '#ef4444';
+        console.error('Upload error:', error);
+        alert('Upload failed: ' + error.message);
+        return false;
+      }
+    }
+
+    // Load gesture from Supabase
+    async function loadGestureFromSupabase(name) {
+      if (!supabaseClient) return null;
+
+      try {
+        cloudStatus.textContent = '⏳ Loading...';
+        cloudStatus.style.color = '#f59e0b';
+
+        const { data, error } = await supabaseClient
+          .from('gestures')
+          .select('data')
+          .eq('name', name)
+          .single();
+
+        if (error) throw error;
+
+        cloudStatus.textContent = '☁️ Connected';
+        cloudStatus.style.color = '#10b981';
+
+        // Cache the gesture
+        gesturesDict[name] = data.data;
+        return data.data;
+      } catch (error) {
+        cloudStatus.textContent = '❌ Load failed';
+        cloudStatus.style.color = '#ef4444';
+        console.error('Load error:', error);
+        return null;
+      }
+    }
+
+    // Get all gestures as dictionary
+    async function getGesturesAsDictionary() {
+      if (!supabaseClient) return {};
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('gestures')
+          .select('name, data');
+
+        if (error) throw error;
+
+        return data.reduce((dict, gesture) => {
+          dict[gesture.name] = gesture.data;
+          return dict;
+        }, {});
+      } catch (error) {
+        console.error('Error fetching gestures dictionary:', error);
+        return {};
+      }
+    }
+
+    // Cloud UI Event Handlers
+    uploadCloudBtn.addEventListener('click', async () => {
+      if (!referenceGesture || !referenceGesture.length) {
+        alert('No gesture loaded to upload. Load a JSON file first.');
+        return;
+      }
+
+      const currentName = loadedGestureName.textContent;
+      const gestureName = prompt('Enter gesture name:', currentName !== 'None' ? currentName : '');
+
+      if (gestureName && gestureName.trim()) {
+        await uploadGestureToSupabase(gestureName.trim(), referenceGesture);
+      }
+    });
+
+    cloudGestureSelect.addEventListener('change', async (e) => {
+      const selectedName = e.target.value;
+      if (!selectedName) return;
+
+      const gestureData = await loadGestureFromSupabase(selectedName);
+      if (gestureData) {
+        referenceGesture = gestureData;
+        loadedGestureName.textContent = selectedName;
+        frameCountSpan.textContent = ` (${gestureData.length} frames)`;
+        totalFramesEl.textContent = gestureData.length;
+        recordBtn.disabled = false;
+        playRefBtn.disabled = false;
+        pauseRefBtn.disabled = false;
+        uploadCloudBtn.disabled = false;
+        refFrameIndex = 0;
+        drawReferenceFrame(0);
+        console.log(`Loaded "${selectedName}" from cloud: ${gestureData.length} frames`);
+      }
+
+      // Reset dropdown
+      cloudGestureSelect.value = '';
+    });
+
+    // Initialize Supabase on page load
+    initSupabase();
+
+    // ========== FULLSCREEN MODE ==========
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    let isFullscreen = false;
+
+    fullscreenBtn.addEventListener('click', () => {
+      isFullscreen = !isFullscreen;
+      document.documentElement.classList.toggle('fullscreen-mode', isFullscreen);
+      fullscreenBtn.textContent = isFullscreen ? '✕' : '⛶';
+    });
+
+    // ========== SIGNS LIBRARY ==========
+    const signsLibraryBtn = document.getElementById('signsLibraryBtn');
+    const signsLibraryPanel = document.getElementById('signsLibraryPanel');
+    const closeLibraryBtn = document.getElementById('closeLibraryBtn');
+    const signsGrid = document.getElementById('signsGrid');
+
+    signsLibraryBtn.addEventListener('click', () => {
+      signsLibraryPanel.classList.add('open');
+      loadSignsLibrary();
+    });
+
+    closeLibraryBtn.addEventListener('click', () => {
+      signsLibraryPanel.classList.remove('open');
+    });
+
+    // Load all signs from Supabase
+    async function loadSignsLibrary() {
+      if (!supabaseClient) {
+        signsGrid.innerHTML = '<div class="signs-empty">⚠️ Connect to Supabase first</div>';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('gestures')
+          .select('name, frame_count')
+          .order('name');
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+          signsGrid.innerHTML = '<div class="signs-empty">No signs saved yet.<br>Upload your first sign!</div>';
+          return;
+        }
+
+        signsGrid.innerHTML = data.map(sign => `
+          <div class="sign-card" data-sign="${sign.name}">
+            <div class="sign-name">${sign.name}</div>
+            <div class="sign-frames">${sign.frame_count} frames</div>
+          </div>
+        `).join('');
+
+        // Add click handlers
+        signsGrid.querySelectorAll('.sign-card').forEach(card => {
+          card.addEventListener('click', async () => {
+            const signName = card.dataset.sign;
+            const gestureData = await loadGestureFromSupabase(signName);
+            if (gestureData) {
+              referenceGesture = gestureData;
+              loadedGestureName.textContent = signName;
+              frameCountSpan.textContent = ` (${gestureData.length} frames)`;
+              totalFramesEl.textContent = gestureData.length;
+              recordBtn.disabled = false;
+              playRefBtn.disabled = false;
+              pauseRefBtn.disabled = false;
+              uploadCloudBtn.disabled = false;
+              refFrameIndex = 0;
+              drawReferenceFrame(0);
+              signsLibraryPanel.classList.remove('open');
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Error loading signs library:', error);
+        signsGrid.innerHTML = '<div class="signs-empty">❌ Error loading signs</div>';
+      }
+    }
+
+    // ========== PUSH NEW JSON TO SUPABASE ==========
+    // Function to push any JSON data to Supabase
+    async function pushNewJsonToSupabase(name, jsonData) {
+      if (!supabaseClient) {
+        console.error('Supabase not connected');
+        return { success: false, error: 'Supabase not connected' };
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('gestures')
+          .upsert({
+            name: name,
+            data: jsonData,
+            frame_count: Array.isArray(jsonData) ? jsonData.length : 1,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'name' });
+
+        if (error) throw error;
+
+        console.log(`Successfully pushed "${name}" to Supabase`);
+        await refreshCloudGestures();
+        return { success: true };
+      } catch (error) {
+        console.error('Error pushing to Supabase:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Expose function globally for console access
+    window.pushNewJsonToSupabase = pushNewJsonToSupabase;
+    window.loadSignsLibrary = loadSignsLibrary;
+    window.getGesturesAsDictionary = getGesturesAsDictionary;
+
 
     const toggleLandmarksBtn = document.getElementById('toggleLandmarks');
 
@@ -1202,6 +1701,7 @@
           recordBtn.disabled = false;
           playRefBtn.disabled = false;
           pauseRefBtn.disabled = false;
+          uploadCloudBtn.disabled = false;
 
           drawReferenceFrame(0);
           updateFeedback([{

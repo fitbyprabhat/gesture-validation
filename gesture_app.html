@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ISL Gesture Validator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0b;
+            --surface: #141416;
+            --surface-2: #1c1c1f;
+            --border: #2a2a2d;
+            --text: #fafafa;
+            --text-muted: #71717a;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            padding: 12px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 24px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            min-height: calc(100vh - 60px);
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Library Screen */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .gesture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .gesture-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gesture-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .gesture-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .gesture-card p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .gesture-card .frames {
+            display: inline-block;
+            background: var(--surface-2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-top: 12px;
+        }
+
+        /* Record Screen */
+        .record-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .record-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            aspect-ratio: 4/3;
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .video-container video,
+        .video-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-container video {
+            transform: scaleX(-1);
+        }
+
+        .video-container canvas {
+            transform: scaleX(-1);
+        }
+
+        .recording-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--error);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .recording-badge.active {
+            display: flex;
+        }
+
+        .recording-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.recording {
+            background: var(--success);
+        }
+
+        .btn-secondary {
+            background: var(--surface-2);
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .score-value {
+            font-size: 64px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* View Screen */
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            width: fit-content;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .toggle-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .animation-view {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .animation-view canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .json-view {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+        }
+
+        .json-view.active {
+            display: block;
+        }
+
+        .animation-view.hidden {
+            display: none;
+        }
+
+        .json-content {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            max-height: 500px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .playback-controls button {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .playback-controls button:hover {
+            background: var(--border);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .modal input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .modal input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btns button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .modal-btns .cancel {
+            background: transparent;
+            color: var(--text);
+        }
+
+        .modal-btns .save {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-item .label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            font-size: 13px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            transition: transform 0.3s;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <button class="nav-btn active" data-screen="library">Library</button>
+        <button class="nav-btn" data-screen="record">Record</button>
+        <button class="nav-btn" data-screen="view">View</button>
+    </nav>
+
+    <!-- Library Screen -->
+    <div class="screen active" id="libraryScreen">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search gestures...">
+            <button class="btn" style="width:auto;margin:0" onclick="document.getElementById('fileInput').click()">+
+                Import</button>
+            <input type="file" id="fileInput" accept=".json" style="display:none">
+        </div>
+        <div class="gesture-grid" id="gestureGrid"></div>
+        <div class="empty-state" id="emptyState">
+            <h3>No gestures yet</h3>
+            <p>Import a JSON file or connect to Supabase to get started</p>
+        </div>
+    </div>
+
+    <!-- Record Screen -->
+    <div class="screen" id="recordScreen">
+        <div class="record-layout">
+            <div class="panel">
+                <div class="panel-header">Live Camera</div>
+                <div class="panel-body">
+                    <div class="video-container">
+                        <video id="videoElement" autoplay playsinline></video>
+                        <canvas id="canvasElement"></canvas>
+                        <div class="recording-badge" id="recordingBadge">
+                            <div class="dot"></div>
+                            <span>REC <span id="frameCount">0</span></span>
+                        </div>
+                    </div>
+                    <button class="btn" id="recordBtn" disabled>Start Recording</button>
+                    <div class="status-bar">
+                        <div class="status-item">
+                            <div class="label">FPS</div>
+                            <div class="value" id="fpsValue">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">Status</div>
+                            <div class="value" id="statusValue">Loading</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">Reference</div>
+                <div class="panel-body">
+                    <div class="video-container" style="background:var(--surface-2)">
+                        <canvas id="referenceCanvas"></canvas>
+                    </div>
+                    <div class="score-display" id="scoreDisplay">
+                        <div class="score-value" id="scoreValue">--%</div>
+                        <div class="score-label">Similarity Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Screen -->
+    <div class="screen" id="viewScreen">
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="animationToggle">Animation</button>
+            <button class="toggle-btn" id="jsonToggle">JSON Data</button>
+        </div>
+        <div class="animation-view" id="animationView">
+            <canvas id="viewCanvas" width="800" height="450"></canvas>
+        </div>
+        <div class="json-view" id="jsonView">
+            <pre class="json-content" id="jsonContent">Select a gesture from the library to view its data</pre>
+        </div>
+        <div class="playback-controls" id="playbackControls">
+            <button id="playBtn">▶ Play</button>
+            <button id="pauseBtn">⏸ Pause</button>
+            <button id="saveBtn">💾 Save to Supabase</button>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <h2>Save Gesture</h2>
+            <input type="text" id="gestureNameInput" placeholder="Enter gesture name...">
+            <div class="modal-btns">
+                <button class="cancel" onclick="closeSaveModal()">Cancel</button>
+                <button class="save" onclick="saveToSupabase()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+
+    <script>
+        // ========== SUPABASE CONFIG ==========
+        const SUPABASE_URL = 'https://rduqgaayrrsirkkiyaxw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkdXFnYWF5cnJzaXJra2l5YXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NzM5MTksImV4cCI6MjA4NjE0OTkxOX0.a4_fTKl-OmDc00aSmOtEcULHh31gZCCXlHlLw1xASVk';
+        let supabase = null;
+
+        try {
+            if (SUPABASE_URL !== 'https://your-project.supabase.co') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) { console.log('Supabase not configured'); }
+
+        // ========== STATE ==========
+        let gestures = [];
+        let currentGesture = null;
+        let recordedFrames = [];
+        let isRecording = false;
+        let playInterval = null;
+        let frameIndex = 0;
+
+        // ========== DOM ==========
+        const videoEl = document.getElementById('videoElement');
+        const canvasEl = document.getElementById('canvasElement');
+        const canvasCtx = canvasEl.getContext('2d');
+        const refCanvas = document.getElementById('referenceCanvas');
+        const refCtx = refCanvas.getContext('2d');
+        const viewCanvas = document.getElementById('viewCanvas');
+        const viewCtx = viewCanvas.getContext('2d');
+
+        // ========== NAVIGATION ==========
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.screen + 'Screen').classList.add('active');
+            });
+        });
+
+        // ========== VIEW TOGGLE ==========
+        document.getElementById('animationToggle').addEventListener('click', () => {
+            document.getElementById('animationToggle').classList.add('active');
+            document.getElementById('jsonToggle').classList.remove('active');
+            document.getElementById('animationView').classList.remove('hidden');
+            document.getElementById('jsonView').classList.remove('active');
+        });
+
+        document.getElementById('jsonToggle').addEventListener('click', () => {
+            document.getElementById('jsonToggle').classList.add('active');
+            document.getElementById('animationToggle').classList.remove('active');
+            document.getElementById('jsonView').classList.add('active');
+            document.getElementById('animationView').classList.add('hidden');
+        });
+
+        // ========== LIBRARY ==========
+        function renderLibrary() {
+            const grid = document.getElementById('gestureGrid');
+            const empty = document.getElementById('emptyState');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtered = gestures.filter(g => g.name.toLowerCase().includes(search));
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            grid.innerHTML = filtered.map((g, i) => `
+        <div class="gesture-card" onclick="selectGesture(${i})">
+          <h3>${g.name}</h3>
+          <p>${g.source || 'Local'}</p>
+          <span class="frames">${g.frames.length} frames</span>
+        </div>
+      `).join('');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderLibrary);
+
+        function selectGesture(index) {
+            currentGesture = gestures[index];
+            document.getElementById('jsonContent').textContent = JSON.stringify(currentGesture.frames, null, 2);
+            drawFrame(refCtx, refCanvas, currentGesture.frames[0]);
+            showToast(`Selected: ${currentGesture.name}`);
+        }
+
+        // ========== FILE IMPORT ==========
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    const name = file.name.replace('.json', '');
+                    gestures.push({ name, frames: data, source: 'Local' });
+                    renderLibrary();
+                    showToast(`Imported: ${name}`);
+                } catch (err) {
+                    showToast('Error loading file');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // ========== RECORDING ==========
+        const recordBtn = document.getElementById('recordBtn');
+
+        recordBtn.addEventListener('click', () => {
+            if (isRecording) {
+                isRecording = false;
+                recordBtn.textContent = 'Start Recording';
+                recordBtn.classList.remove('recording');
+                document.getElementById('recordingBadge').classList.remove('active');
+
+                if (recordedFrames.length > 5) {
+                    if (currentGesture) analyzeGesture();
+                    document.getElementById('saveModal').classList.add('active');
+                }
+            } else {
+                isRecording = true;
+                recordedFrames = [];
+                recordBtn.textContent = 'Stop Recording';
+                recordBtn.classList.add('recording');
+                document.getElementById('recordingBadge').classList.add('active');
+            }
+        });
+
+        // ========== DTW ==========
+        function computeDTW(seq1, seq2) {
+            const n = seq1.length, m = seq2.length;
+            const dtw = Array(n + 1).fill(null).map(() => Array(m + 1).fill(Infinity));
+            dtw[0][0] = 0;
+
+            for (let i = 1; i <= n; i++) {
+                for (let j = 1; j <= m; j++) {
+                    const cost = frameDistance(seq1[i - 1], seq2[j - 1]);
+                    dtw[i][j] = cost + Math.min(dtw[i - 1][j], dtw[i][j - 1], dtw[i - 1][j - 1]);
+                }
+            }
+            return dtw[n][m] / Math.max(n, m);
+        }
+
+        function frameDistance(f1, f2) {
+            let dist = 0, count = 0;
+            ['left_hand', 'right_hand'].forEach(key => {
+                if (f1[key]?.length && f2[key]?.length) {
+                    const w1 = f1[key][0], w2 = f2[key][0];
+                    for (let i = 0; i < Math.min(f1[key].length, f2[key].length); i++) {
+                        const p1 = { x: f1[key][i].x - w1.x, y: f1[key][i].y - w1.y };
+                        const p2 = { x: f2[key][i].x - w2.x, y: f2[key][i].y - w2.y };
+                        dist += Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+                        count++;
+                    }
+                }
+            });
+            return count > 0 ? dist / count : 1;
+        }
+
+        function analyzeGesture() {
+            const distance = computeDTW(recordedFrames, currentGesture.frames);
+            const similarity = Math.max(0, Math.min(100, 100 - distance * 500));
+            document.getElementById('scoreValue').textContent = Math.round(similarity) + '%';
+        }
+
+        // ========== SUPABASE ==========
+        async function loadFromSupabase() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase.from('gestures').select('*');
+                if (data) {
+                    data.forEach(g => gestures.push({ name: g.name, frames: g.frames, source: 'Supabase' }));
+                    renderLibrary();
+                }
+            } catch (e) { console.log('Supabase load error'); }
+        }
+
+        async function saveToSupabase() {
+            const name = document.getElementById('gestureNameInput').value.trim();
+            if (!name) { showToast('Enter a name'); return; }
+
+            gestures.push({ name, frames: recordedFrames, source: 'Local' });
+
+            if (supabase) {
+                try {
+                    await supabase.from('gestures').insert({ name, frames: recordedFrames });
+                    showToast('Saved to Supabase!');
+                } catch (e) { showToast('Saved locally (Supabase error)'); }
+            } else {
+                showToast('Saved locally');
+            }
+
+            closeSaveModal();
+            renderLibrary();
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('active');
+            document.getElementById('gestureNameInput').value = '';
+        }
+
+        // ========== PLAYBACK ==========
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (!currentGesture) return;
+            if (playInterval) clearInterval(playInterval);
+            playInterval = setInterval(() => {
+                frameIndex = (frameIndex + 1) % currentGesture.frames.length;
+                drawFrame(viewCtx, viewCanvas, currentGesture.frames[frameIndex]);
+            }, 33);
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (playInterval) { clearInterval(playInterval); playInterval = null; }
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            if (recordedFrames.length > 0) {
+                document.getElementById('saveModal').classList.add('active');
+            } else {
+                showToast('No recording to save');
+            }
+        });
+
+        // ========== DRAWING ==========
+        const HAND_CONNECTIONS = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10], [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18], [18, 19], [19, 20], [5, 9], [9, 13], [13, 17]];
+
+        function drawFrame(ctx, canvas, frame) {
+            if (!frame) return;
+            const w = canvas.width, h = canvas.height;
+            ctx.fillStyle = '#0a0a0b';
+            ctx.fillRect(0, 0, w, h);
+
+            ['left_hand', 'right_hand'].forEach(key => {
+                const hand = frame[key];
+                if (hand?.length) {
+                    ctx.strokeStyle = key === 'left_hand' ? '#22c55e' : '#6366f1';
+                    ctx.lineWidth = 2;
+                    HAND_CONNECTIONS.forEach(([s, e]) => {
+                        if (hand[s] && hand[e]) {
+                            ctx.beginPath();
+                            ctx.moveTo(hand[s].x * w, hand[s].y * h);
+                            ctx.lineTo(hand[e].x * w, hand[e].y * h);
+                            ctx.stroke();
+                        }
+                    });
+                    hand.forEach(lm => {
+                        ctx.beginPath();
+                        ctx.arc(lm.x * w, lm.y * h, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff';
+                        ctx.fill();
+                    });
+                }
+            });
+        }
+
+        // ========== MEDIAPIPE ==========
+        let fps = 0, lastTime = performance.now(), fpsCount = 0;
+
+        function onResults(results) {
+            fpsCount++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                document.getElementById('fpsValue').textContent = fpsCount;
+                fpsCount = 0;
+                lastTime = now;
+            }
+
+            const w = canvasEl.width, h = canvasEl.height;
+            canvasCtx.clearRect(0, 0, w, h);
+            canvasCtx.drawImage(results.image, 0, 0, w, h);
+
+            if (isRecording) {
+                recordedFrames.push({
+                    left_hand: results.leftHandLandmarks?.map(l => ({ x: l.x, y: l.y, z: l.z })) || [],
+                    right_hand: results.rightHandLandmarks?.map(l => ({ x: l.x, y: l.y, z: l.z })) || [],
+                    pose: results.poseLandmarks?.map(l => ({ x: l.x, y: l.y, z: l.z })) || []
+                });
+                document.getElementById('frameCount').textContent = recordedFrames.length;
+            }
+
+            [results.leftHandLandmarks, results.rightHandLandmarks].forEach((hand, i) => {
+                if (hand) {
+                    canvasCtx.strokeStyle = i === 0 ? '#22c55e' : '#6366f1';
+                    canvasCtx.lineWidth = 2;
+                    HAND_CONNECTIONS.forEach(([s, e]) => {
+                        canvasCtx.beginPath();
+                        canvasCtx.moveTo(hand[s].x * w, hand[s].y * h);
+                        canvasCtx.lineTo(hand[e].x * w, hand[e].y * h);
+                        canvasCtx.stroke();
+                    });
+                    hand.forEach(lm => {
+                        canvasCtx.beginPath();
+                        canvasCtx.arc(lm.x * w, lm.y * h, 4, 0, Math.PI * 2);
+                        canvasCtx.fillStyle = '#fff';
+                        canvasCtx.fill();
+                    });
+                }
+            });
+        }
+
+        // ========== INIT ==========
+        const holistic = new Holistic({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
+        holistic.setOptions({ modelComplexity: 1, smoothLandmarks: true, refineFaceLandmarks: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+
+        holistic.onResults(results => {
+            document.getElementById('statusValue').textContent = 'Active';
+            document.getElementById('recordBtn').disabled = false;
+            onResults(results);
+        });
+
+        const camera = new Camera(videoEl, {
+            onFrame: async () => { await holistic.send({ image: videoEl }); },
+            width: 640, height: 480
+        });
+
+        camera.start().then(() => {
+            canvasEl.width = 640;
+            canvasEl.height = 480;
+            refCanvas.width = 640;
+            refCanvas.height = 480;
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Load data
+        renderLibrary();
+        loadFromSupabase();
+    </script>
+</body>
+
+</html>
